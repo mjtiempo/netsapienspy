@@ -1,4 +1,5 @@
 import os
+import datetime as DT
 from oauthlib.oauth2 import LegacyApplicationClient
 from requests_oauthlib import OAuth2Session
 
@@ -18,6 +19,12 @@ class Netsapiens(object):
         self.password = password
         self.nsclient = OAuth2Session(client=LegacyApplicationClient(client_id=CLIENT_ID))
 
+        self.today = DT.datetime.today()
+        self.week_ago = self.today - DT.timedelta(days=7)
+        self.start_date = self.week_ago.strftime('%Y-%m-%d %H:%M:%S')
+        self.end_date = self.today.strftime('%Y-%m-%d %H:%M:%S')
+
+
     def fetch_token(self):
         try:
             self.nsclient.fetch_token(token_url=TOKEN_URL, username=self.username, password=self.password, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
@@ -25,17 +32,33 @@ class Netsapiens(object):
         except:
             print('Error fetching new token! Check username or password!')
 
-    def api_call(self, object_, action, params=None, format__='json'):
+    def api_call(self, object_, action, params=None, format_='json'):
         self.fetch_token()
         resource_url = BASE_URL + f'?object={object_}&action={action}&format={format_}'
         return self.nsclient.get(resource_url, params=params)
 
+    def domain_read(self, domain=None, format_='json'):
+        params = {'domain': domain}
+        if domain is None:
+            params = None
+        return self.api_call('domain', 'read', params, format_)
 
-    def domain_read(self, domain=None, format__='json'):
-        params = None
-        if(domain is not None): params = {'domain': domain}
-        return self.api_call('domain', 'read', params, format__)
-
+    def cdr2_readbyuser(self, uid, start_date=None, end_date=None, limit='100', type_=None, showhidden='0', raw='no', format_='json'):
+        if start_date is None:
+            start_date = self.start_date
+        if end_date is None:
+            end_date = self.end_date
+        params = {
+            'uid': uid,
+            'start_date': start_date,
+            'end_date': end_date,
+            'limit': limit,
+            'showhidden': showhidden,
+            'raw': raw
+        }
+        if type_ is not None:
+            params['type'] = type_
+        return self.api_call('cdr2', 'read', params, format_)
 
     def reseller_create(self, territory, description):
         pass
@@ -50,8 +73,6 @@ class Netsapiens(object):
     def domain_create(self, domain, territory, description, call_limit, call_limit_ext, max_user, max_call_queue, max_aa, max_conference, max_department, max_site, max_device):
         pass
     def domain_count(self, domain, territory):
-        pass
-    def domain_read(self, domain):
         pass
     def domain_update(self, domain, territory, moh, mor, mot, rmoh, rating, resi, sub_limit, dial_plan, dial_policy, email_sender, smtp_host, smtp_port, smtp_uid, smtp_pwd, from_user, description, call_limit, call_limit_ext, max_user, max_call_queue, max_aa, max_conference, max_department, max_device, max_site, policies):
         pass
@@ -149,8 +170,7 @@ class Netsapiens(object):
         pass
     def cdr2_readbyterritory(self, cdr_id, start_date, end_date, territory, limit):
         pass
-    def cdr2_readbyuser(self, start_date, end_date, limit, uid, type, showhidden):
-        pass
+
     def cdr2_reportbydomain(self, start_date, end_date, domain, report_by):
         pass
     def cdr2_reportbygrouptype(self, start_date, end_date, group_type, grp, report_by):
