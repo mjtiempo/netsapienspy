@@ -30,7 +30,7 @@ class Netsapiens(object):
             self.nsclient.fetch_token(token_url=TOKEN_URL, username=self.username, password=self.password, client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
             return self.nsclient.token
         except:
-            print('Error fetching new token! Check username or password!')
+            return {'error': 403, 'reason': 'Unauthorized'}
 
     def api_call(self, object_, action, params=None, format_='json'):
         self.fetch_token()
@@ -59,6 +59,39 @@ class Netsapiens(object):
         if type_ is not None:
             params['type'] = type_
         return self.api_call('cdr2', 'read', params, format_)
+
+    def call_make(self, destination, uid=None, callid=None, origination=None, application=None, auto=None, cbani=None, ani=None):
+        if uid is None:
+            uid = self.username
+        if callid is None:
+            callid = os.urandom(16).hex()
+        params = {
+            'uid': uid,
+            'callid': callid,
+            'destination': destination
+        }
+        if origination is not None:
+            params['origination'] = origination
+        if application is not None:
+            params['application'] = application
+        if auto is not None:
+            params['auto'] = auto
+        if cbani is not None:
+            params['cbani'] = cbani
+        if ani is not None:
+            params['ani'] = ani
+
+        return self.api_call('call', 'call', params)
+
+    def call_disconnect(self, callid, uid=None):
+        if uid is None:
+            uid = self.username
+        params = {
+            'callid': callid,
+            'uid': uid
+        }
+
+        return self.api_call('call', 'disconnect', params)
 
     def reseller_create(self, territory, description):
         pass
@@ -221,8 +254,7 @@ class Netsapiens(object):
         pass
     def call_park(self, callid, uid, prefix):
         pass
-    def call_make(self, callid, uid, destination, origination, application, auto, cbani, ani):
-        pass
+
     def call_holdterm(self, callid, uid):
         pass
     def call_holdorig(self, callid, uid):
